@@ -1,0 +1,490 @@
+Setup of computer.
+Prerequisite: Xammp must be already installed
+
+1. Download Composer and Git bash on your local machine
+
+Create a Laravel
+2. Navigate to htdocs folder.
+3.Run the command to create the laravel project 'lasapp'
+'composer create-project laravel/laravel lsapp'
+
+Run the xammpp and checkout the localhost
+
+4. Add the following line in c/xampp/apache/conf/extra/httpd-vhosts.conf
+
+<VirtualHost *:80>
+  DocumentRoot "C:/xampp/htdocs"
+  ServerName localhost
+</VirtualHost>
+<VirtualHost *:80>
+  DocumentRoot "C:/xampp/htdocs/lsapp/public"
+  ServerName lsapp.test
+</VirtualHost>
+
+5. Add the following line in etc/hosts file
+
+127.0.0.1	localhost
+127.0.0.1	lsapp.test
+
+
+BUILD a CUSTOM HOME Page
+6. CREATION of Route
+  6.1 Create a route in routes/web.php
+  Route::get('/about', function () {
+      // return view('pages.about');
+      return "Hello World";
+  });
+
+7. CREATION of View
+  7.1 Create a folder under 'resources/views' as 'pages'
+  7.2 Create a blade template 'about.blade.php'
+  <h1>Hello World</h1>
+
+8. Creation of Dynamic routes
+  8.1
+  Route::get('/users/{id}', function ($id) {
+      return $id;
+      });
+  8.2 Check the result in the browser
+
+
+9. Creation of controller.
+  9.1 Using command prompt navigate to the c/xampp/htdocs/lsapp folder
+  9.2 Run the following command to make the controller
+    php artisan make:controller PagesController
+  9.3 Make sure the controller is create in app/http/controllers -> PagesController.php
+  9.4 Add a function/method inside controller class
+  public function index(){
+    return 'Index';
+  }
+  9.5 makes changes in the routes page.
+  (<route>,<controller_name@method_name>)
+  Route::get('/', 'PagesController@index');
+  9.6 Make a blade template in resources/views/pages -> index.blade.php
+
+10: Template Organization and Custom css
+  10.1: Create a layouts folder in view folder structure
+  10.2  Create a blade template file.
+
+
+<!doctype html>
+  <html lang="{{ app()->getLocale() }}">
+      <head>
+          <meta charset="utf-8">
+          <meta http-equiv="X-UA-Compatible" content="IE=edge">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>{{config('app.name','lS')}}</title>
+      </head>
+      <body>
+        @yield('content')
+      </body>
+  </html>
+
+  10.3: Changes required in child template
+  @extends('layouts.app')
+
+  @section('content')
+        <h1>Welcome to Laravel</h1>
+        <p>This is a basic laravel application</p>
+  @endsection
+
+11.Passing value to template.
+  11.1 Make changes in the Controller File to include variable
+  public function index(){
+    $title = 'Here We GO!!';
+    return view('pages.index')->with('title', $title);
+  }
+  11.2 Make changes in the template files.
+  @extends('layouts.app')
+
+  @section('content')
+        <h1>{{$title}}</h1>
+        <p>This is a basic laravel application</p>
+  @endsection
+
+12. passing an array of values to the template
+  12.1 make the changes in the controller file to initialise the array(associative).
+  public function services(){
+    $data = array(
+      'title' => 'Services',
+      'services' => ['Web Design','Programming','SEO']
+    );
+    return view('pages.services')->with($data);
+  }
+  12.2 make changes in the template file to display the changes.
+  @extends('layouts.app')
+
+  @section('content')
+    <h1>{{$title}}</h1>
+    @if(count($services) > 0)
+    <ul>
+      @foreach($services as $service)
+        <li>{{$service}}</li>
+      @endforeach
+    </ul>
+    @endif
+  @endsection
+
+ADDING CUSTOM CSS TO THE FILE
+  13. Include the application base style sheet present in asset folder in the
+  master page
+  <link rel="stylesheet" href="{{asset('css/app.css')}}">
+
+MAKING TEMPLATE elements
+
+14. Create a folder 'inc' under views folder to include the HTML elements
+ 14.1 create a template file which needs to be includes and add the HTML content in it
+ 14.2 Make changes in the core template files to include this file
+ @include('inc.navbar')
+
+CREATION OF DATABASE and
+ 15.Use PhpMyAdmin and Create a database 'lsapp'.
+  15.1 Create a controller using the artisan command
+  php artisan make:controller PostsController
+  15.2 Create a model using artisan command
+  php artisan make:model Post -m
+  -m option is used to create migration table in the Database
+  15.3 Check whether Post.php file is created under 'app'
+  & Check whether 'create_posts_table' is created under 'database/migrations'.
+  15.4 Creation of field in the 'Post' table by making the changes in 'create_posts_table'
+   Add the following changes in up function.
+   $table->string('title');
+   $table->mediumText('body');
+
+  15.5 MAKE changes in the .env files
+  DB_DATABASE=lsapp
+  DB_USERNAME=root
+  DB_PASSWORD=
+
+  15.6 Dependency Check -> for the string field in step 15.4
+  Make changes in the 'app/providers/AppServiceProvider.php'
+  use Illuminate\Support\Facades\Schema;
+  public function boot()
+  {
+      Schema::defaultStringLength(191);
+  }
+
+  15.7 Run the migrate command.
+  php artisan migrate
+
+USING TINKER(command Line) to add data to Database
+Eloquent is the ORM used by Laravel
+
+ 15.8 php artisan tinker
+ 15.9 Access/Count the number of posts.
+ App\Post::count()
+ 15.10 Create a new object to add the new entry to post table
+ $post=new App\Post();
+ 15.11 new field values
+ $post->title = 'Post One';
+ $post->body = 'This is the post body';
+ 15.12 saving the changes to the Database
+ $post->save();
+
+ 15.13: Make the controller with the predefined CRUD functionality.
+ php artisan make:PostsController --resource
+ 15.14 Add routes for the newly Created Controller
+ Route::resource('great','PostsController');
+
+ 15.15 artisan command to see the
+ php artisan route:list
+
+
+ ORM Eloquent
+ 16. Make changes in the Post.php file . Add the following code
+ Reasons(?): look into documentation
+ class Post extends Model
+ {
+     //Table Name
+     protected $table = 'posts';
+     // Primary key
+     public $primaryKey = 'id';
+     //Timestamps
+     public $timestamps = true;
+ }
+
+// read about the various resources available with the PostsController
+// and how they will connect with the view
+
+ 17.Working on the index function in the PostsController
+    17.1 Add a return value in the index function to point to the view
+    17.2 Create a 'posts' folder in the view to house the various template releated to post
+    17.3 import(use) the model in the controller
+    use App\Post;
+    17.4 function to get all posts
+    Post::all()
+    17.5 store the above value in the variable and pass it to view
+    $posts =  Post::all();
+    return view('posts.index')->with('posts',$posts);
+    17.6 make the changes in the template
+
+    show() method takes care of showing the individual blog post
+    17.7 make the following changes in the show($id)
+    return Post::find($id);
+
+    Post::orderBy('title','desc')->get();
+    Post::where('title','Post Two')->get();
+    Post::orderBy('title','desc')->take(1)->get();
+    17.8 Direct Use of Sql statement in the controller
+    use DB;
+    $posts = DB::select('SELECT * FROM posts');
+
+    17.9 Pagination in the Laravel
+    Post::orderBy('title','desc')->paginate(10);
+    make changes in the theme page
+    {{$posts->links()}}
+
+    18 CREATION OF POSTS USING LARAVEL APPS
+    a form will be used for this
+    18.1 copy the bootstrap code for form and modify the fields to submit to appropriate
+    URL
+    <form method="POST" action="{{ url('posts')}}">
+
+    KNow more about content present in the  message.blade.php
+
+    Embedded editor using the jquery
+
+    18.2 to show the HTML Content
+    change from {{$post->body}}
+     to {!!$post->body!!}
+
+
+EDIT and DELETE POST
+
+19.Editing the post.
+  19.1 Copy the content of the create template in the edit.blade.php
+  19.2 make changes to the URL to be routed to the appropriate layout
+  action="{{ url('posts/'.$post->id)}}"
+  19.3 Change the values of the input field and the textarea.
+  19.4 Add the hidden input filed to simulate the PUT action
+  <input name="_method" type="hidden" value="PUT">
+  19.5 Edit the update function in the PostsController
+
+20. Delete the POST
+  20.1 Delete function requires gives 'DELETE' value to the server
+  20.2 add delete button in the form as follows
+  <!-- Delete Button -->
+  <form method="POST" action="{{ url('posts/'.$post->id)}}">
+    <input type="hidden" name="_method" value="DELETE">
+    {{ csrf_field() }}
+    <button class="btn btn-lg btn-danger" type="submit" value="Delete">Delete</button>
+  </form>
+  20.3 Make changes in the destroy function of the PostController
+  public function destroy($id)
+  {
+    //delete posts
+    $post =  Post::find($id);
+    $post->delete();
+    return redirect('/posts')->with('success', 'Post Removed');
+  }
+
+21.USER AUTHENTICATION
+21.1 Enable the inbuilt user authentication.
+run the command : php artisan make:auth
+
+21.2 Take the backup of the current 'layout/app.blade.php' file before running the command
+21.3 Make the layout changes to the newly generated template files
+21.4 Changes to the current set of URLs from 'home' -> 'dashboard'
+    edit routes/web.php, homecontroller.php, auth/LoginController,RegisterController,ResetPasswordController
+
+Adding a new field to table in database-> Migrations:
+21.5 php artisan make:migration add_user_id_to_posts
+21.6 Make the following changes to add User field to Post table
+public function up()
+{
+    Schema::table('posts', function($table){
+      $table->integer('user_id');
+    });
+}
+21.7 apply the changes to the Database
+php artisan migrate
+
+21.8 open phpmyadmin and check whether the changes are applied to the database
+21.9 Edit the existing controller to handle the newly added column
+ $post->user_id = auth()->user()->id;
+
+
+22. ESTABLISHING A RELATIONSHIP(1 User has many posts)
+22.1 Many realtion function
+public function user(){
+  return $this->belongsTo('App\User');
+}
+22.2 One relation function
+public function posts()
+{
+  return $this->hasMany('App\Post');
+}
+This help in using one to many relationship.
+
+22.3 following function will give all the post that are created by a particular user
+return view('dashboard')->with('posts',$user->posts);
+
+22.4 To find the name of a particular user who created a post
+{{$post->user->name}}
+
+
+23.Access Control
+ Access control is very easy we are going to mimic the inbuilt user controll
+23.1 copy the __construct function from the DashboardController and paste it
+     in the PostController
+     /**
+      * Create a new controller instance.
+      *
+      * @return void
+      */
+     public function __construct()
+     {
+         $this->middleware('auth');
+     }
+ 23.2 The function will apply authentication to all the function in the controller
+      class
+      To allow function/pages that should be to the guest users
+      $this->middleware('auth', ['except' =>['index','show']]);
+
+ 23.3 Make the 'delete' and 'edit' button invisible to guest user. (HTML level protection)
+ @if(!Auth::guest()) ::::: this is to check that user is not a guest
+   @if(Auth()->user()->id == $post->user_id) :::: this to check that user is the creator of the post
+
+ 23.4 only the creator of the post can delete the post. (Server level protection)
+ if(auth()->user()->id !== $post->user_id)
+ {
+     return redirect('/posts')->with('error','Unauthorized Access');
+ }
+
+
+Image/File Upload in Laravel
+
+
+24.1 Create a Button in Create Blade template.
+include the field in ' enctype="multipart/form-data" ' in the form tag
+
+<div class="form-group">
+  <input type="file" name="cover_image" id="file">
+</div>
+
+24.2 Create a field to store image URL in the database
+  artisan command:
+  php artisan make:migration add_cover_image_to_posts
+
+24.3 Make changes in database/migrations/add_cover_image
+
+public function up()
+{
+    //add cover_image field to Post Database.
+    Schema::table('posts', function($table){
+      $table->string('cover_image');
+    });
+}
+
+public function down()
+{
+    //remove cover_image field to Post Database.
+    Schema::table('posts', function($table){
+      $table->dropColumn('cover_image');
+    });
+}
+
+
+24.4 Commit the changes to the Database
+command: php artisan migrate
+
+24.5 Local Xampp server, Database.. Remove all the post for consistency reason.
+
+24.6 Make changes in the store Function of the  Posts COntroller.
+
+inside the validate function.
+'cover_image' => 'image|nullable|max:1999'
+
+
+Logic to handle file upload .
+//Handle the File Upload
+if($request->hasFile('cover_image'))
+{
+  //get file name with extension
+    $filenameWithExt = $request->file('cover_image')->getClientOriginalName();
+    //get just filename
+    $filename = pathinfo($filenameWithExt, PATHINFO_FILENAME);
+    //get just ext
+    $extension = $request->file('cover_image')->getClientOriginalExtension();
+    //Filename to Store
+    $fileNameToStore = $filename.'_'.time().'.'.$extension;
+    //Upload image
+    $path = $request->file('cover_image')->storeAs('public/cover_images',$fileNameToStore);
+}
+else {
+    $fileNameToStore = 'noimage.jpg';
+     }
+
+final commit to the Database.
+$post->cover_image = $fileNameToStore;
+
+
+
+24.7 There are two different public public folder where images needs to be stored.
+to align(link) both the folders.
+
+php artisan storage:link
+
+24.8 Add the Image to the post through the create URL.
+
+28.9 Changes in the display URL to show the image in the .
+<img style="width:100%" src="/storage/cover_images/{{$post->cover_image}}" alt="">
+
+Make changes in the edit.blade.php and Update function in the PostsController class
+
+28.10 Delete the image of the post
+
+Using the library
+use Illuminate\Support\Facades\Storage;
+
+
+
+
+///////////
+
+links
+https://www.5balloons.info/how-to-use-putpatch-and-delete-method-in-laravel-5-5/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NOTE:
+Blade template
+config():
+yield(): function is used to name the section
+extends(): function is used to link to master/root page
+if, endif
+foreach, endforeach
